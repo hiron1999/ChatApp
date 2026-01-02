@@ -1,5 +1,6 @@
 package com.chatapp.WebSoketService.service;
 
+import com.chatapp.WebSoketService.Model.GroupMessage;
 import com.chatapp.WebSoketService.Model.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +15,12 @@ public class ProducerService {
     @Value(value = "${spring.kafka.topic}")
     private String topicKey;
     @Autowired
-    private KafkaTemplate<String , Message> kafkaTemplate;
+    private KafkaTemplate<String , Object> kafkaTemplate;
 
 
     public CompletableFuture<String> publishMassage(Message message){
-        CompletableFuture<SendResult<String,Message>> result = kafkaTemplate.send(topicKey,message);
+
+        CompletableFuture<SendResult<String,Object>> result = kafkaTemplate.send(topicKey,null,"massage-chanel-4",message);
 
        return result.handle((res, ex)->{
 
@@ -35,9 +37,23 @@ public class ProducerService {
         });
     }
 
-//    @SendToUser("")
-//    private String acknoledge(String status){
-//
-//    }
+    public CompletableFuture<String> publishToGroup(GroupMessage message) {
+        CompletableFuture<SendResult<String, Object>> result = kafkaTemplate.send(topicKey,message);
+        return result.handle((res,ex)->{
+
+             if (ex == null) {
+                System.out.println("Sent message=[" + message +
+                        "] with offset=[" + res.getRecordMetadata().offset() + "]");
+                return "massage sent";
+            } else {
+                System.out.println("Unable to send message=[" +
+                        message + "] due to : " + ex.getMessage());
+                return "massage  not sent";
+            }
+
+        });
+    }
+
+
 
 }

@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+spec:
+  clusterIP: None
+  ports:
+    - port: 2181
+      name: client
+    - port: 2888
+      name: follower
+    - port: 3888
+      name: election
+  selector:
+    app: zookeeper
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+
+spec:
+  serviceName: zookeeper
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      securityContext:
+        runAsUser: 1000   # user inside container
+        fsGroup: 1000     # group ownership for mounted volumes
+
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.5.0
+
+          ports:
+            - name: client
+              containerPort: 2181
+              protocol: TCP
+            - name: quorum
+              containerPort: 2888
+              protocol: TCP
+            - name: leader-election
+              containerPort: 3888
+              protocol: TCP
+
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |
+              # Extract ordinal from pod name
+              ID=$(( ${HOSTNAME##*-} + 1 ))
+              echo "Setting myid=$ID"
+              echo $ID > /var/lib/zookeeper/data/myid
+              export ZOOKEEPER_SERVER_ID=$ID
+              # Now start the main process
+              exec /etc/confluent/docker/run
+
+          env:
+#            - name: ZOOKEEPER_SERVER_ID
+#              value:  "1" # automatically uses pod name as unique ID
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_TICK_TIME
+              value: "2000"
+            - name: ZOOKEEPER_SYNC_LIMIT
+              value: "10"
+            - name: ZOOKEEPER_INIT_LIMIT
+              value: "10"
+            - name: KAFKA_JVM_PERFORMANCE_OPTS
+              value: "-XX:+UseG1GC"
+            - name: KAFKA_OPTS
+              value: "-Dzookeeper.nio.sock.setTcpKeepAlive=true"
+            - name: ZOOKEEPER_SERVERS
+              value: "zookeeper-0.zookeeper:2888:3888;zookeeper-1.zookeeper:2888:3888;zookeeper-2.zookeeper:2888:3888"
+
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/zookeeper/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

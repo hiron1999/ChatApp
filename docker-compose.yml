@@ -1,4 +1,4 @@
-version: '1.0'
+version: '2.0'
 services:
   zookeeper_1:
     image: confluentinc/cp-zookeeper:7.4.4
@@ -125,6 +125,48 @@ services:
       KAFKA_REST_BOOTSTRAP_SERVERS: 'broker_1:9092,broker_2:9093,broker_3:9094'
       KAFKA_REST_LISTENERS: 'http://0.0.0.0:8082'
 #      KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper_1:2181,zookeeper_2:2181,zookeeper_3:2181'
+
+  redis_cache:
+    image: redis:7.4.0-alpine
+    container_name: redis_cache
+    hostname: redis_cache
+
+    volumes:
+      - ./dockerVolume/redis_data:/data
+    ports:
+      - 6371:6379
+    
+
+    command: ["redis-server", "--appendonly", "yes","--bind", "0.0.0.0"]
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis-insight
+
+    volumes:
+      - ./dockerVolume/redisinsight:/data
+    ports:
+      - 8083:5540
+    depends_on:
+      - redis_cache
+  
+  chat-service:
+    image: chat-service:latest
+    hostname: chat-service
+
+    ports:
+      - 8080:8080
+    depends_on:
+      - broker_1
+      - broker_2
+      - broker_3
+      - redis_cache
+
+    environment:
+      KAFKA_CONN_BS: broker_1:9092
+      REDIS_HOST: redis_cache
+      REDIS_PORT: 6379
+
 
 
 
