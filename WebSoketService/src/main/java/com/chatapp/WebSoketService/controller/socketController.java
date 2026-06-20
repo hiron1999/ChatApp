@@ -2,28 +2,33 @@ package com.chatapp.WebSoketService.controller;
 
 import com.chatapp.WebSoketService.Model.GroupMessage;
 import com.chatapp.WebSoketService.Model.Message;
-import com.chatapp.WebSoketService.service.ProducerService;
-import com.chatapp.WebSoketService.service.RedisService;
-import com.chatapp.WebSoketService.service.UserConnectHandler;
+import com.chatapp.WebSoketService.service.*;
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.CompletableFuture;
-
+@Slf4j
 @Controller
 public class socketController {
 
     @Autowired
     private ProducerService producerService;
     @Autowired
-    private RedisService redisService;
+    RedisService redisService;
+    @Autowired
+    private RoomMessagePublisher roomMessagePublisher;
     @Autowired
     UserConnectHandler connectHandler;
+    @Autowired
+    RoomManagementService roomManagementService;
 
     @MessageMapping("/hello/{id}")
 //    @SendTo("/topic/greeting")
@@ -39,11 +44,42 @@ public class socketController {
         return rdisops.thenCompose(chain->producerService.publishMassage(message)) ;
     }
     @MessageMapping("/join/{userId}")
-    public Mono<String> join( @DestinationVariable("userId") String user_id)throws Exception{
-        return connectHandler.addUser(user_id);
+    public Mono<String> join(@DestinationVariable("userId") String user_id , SimpMessageHeaderAccessor headerAccessor)throws Exception{
+        String sessionId = headerAccessor.getSessionId();
+        log.debug("session id fron join: "+sessionId);
+         return connectHandler.addUser(user_id,sessionId);
+
+    }
+    @MessageMapping("/room/create/{roomId}")
+    public Mono<String> createRoom(
+            @DestinationVariable String roomId,
+            SimpMessageHeaderAccessor headerAccessor) {
+
+        String sessionId = headerAccessor.getSessionId();// get from session
+
+        return roomManagementService.createRoom(roomId, sessionId)
+                .map(created -> created
+                        ? "Room " + roomId + " created successfully!"
+                        : "ERROR: Room " + roomId + " already exists!"
+                );
+    }
+
+    @MessageMapping("/room/join/{roomId}")
+    public Mono<String> joinRoom(
+            @DestinationVariable String roomId,
+            SimpMessageHeaderAccessor headerAccessor) {
+
+        String sessionId = headerAccessor.getSessionId();// get from session
+
+        return roomManagementService.addUserToRoom(roomId, sessionId)
+                .map(joined -> joined
+                        ? "Joined room " + roomId
+                        : "ERROR: Room " + roomId + " does not exist!"
+                );
     }
     @MessageMapping("/room")
-    public CompletableFuture<String> sendToRoom(GroupMessage message){
-        return producerService.publishToGroup(message);
+    public Mono<String> sendToRoom(GroupMessage message, SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        return roomMessagePublisher.publishMessage(message, sessionId);
     }
 }

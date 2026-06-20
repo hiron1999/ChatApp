@@ -12,15 +12,18 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.CompletableFuture;
 @Service
 public class ProducerService {
-    @Value(value = "${spring.kafka.topic}")
-    private String topicKey;
+    @Value(value = "${spring.kafka.topic.private}")
+    private  String private_topic_key;
+    @Value(value = "${spring.kafka.topic.group}")
+    private  String group_topic_key;
+
     @Autowired
     private KafkaTemplate<String , Object> kafkaTemplate;
 
 
     public CompletableFuture<String> publishMassage(Message message){
 
-        CompletableFuture<SendResult<String,Object>> result = kafkaTemplate.send(topicKey,null,"massage-chanel-4",message);
+        CompletableFuture<SendResult<String,Object>> result = kafkaTemplate.send(private_topic_key,message);
 
        return result.handle((res, ex)->{
 
@@ -38,7 +41,7 @@ public class ProducerService {
     }
 
     public CompletableFuture<String> publishToGroup(GroupMessage message) {
-        CompletableFuture<SendResult<String, Object>> result = kafkaTemplate.send(topicKey,message);
+        CompletableFuture<SendResult<String, Object>> result = kafkaTemplate.send(group_topic_key,message.roomID(),message);
         return result.handle((res,ex)->{
 
              if (ex == null) {

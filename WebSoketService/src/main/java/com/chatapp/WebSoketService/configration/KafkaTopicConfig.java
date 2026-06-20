@@ -15,8 +15,10 @@ public class KafkaTopicConfig {
 
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
-    @Value(value = "${spring.kafka.topic}")
+    @Value(value = "${spring.kafka.topic.private}")
     private String topicKey;
+    @Value(value = "${spring.kafka.topic.group}")
+    private String grp_topicKey;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -29,4 +31,7 @@ public class KafkaTopicConfig {
     public NewTopic topic1() {
         return new NewTopic(topicKey, 10, (short) 1);
     }
+
+    @Bean
+    public NewTopic topic2() {return new NewTopic(grp_topicKey,100,(short) 1);}
 }

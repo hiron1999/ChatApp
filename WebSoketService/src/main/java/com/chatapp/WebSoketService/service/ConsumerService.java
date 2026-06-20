@@ -13,16 +13,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ConsumerService {
-//    @Value(value = "${spring.kafka.topic}")
-//    private final String topicKey;
 
     @Autowired
     private  SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    RoomMessagePublisher roomMessagePublisher;
 
 
 
-
-    @KafkaListener(topics = "massage-chanel")
+    @KafkaListener(topics = "${spring.kafka.topic.private}" , containerFactory = "kafkaListenerContainerFactory")
 
     public void consumeMassage(  @Payload Message message){
         System.out.printf("form consumer service : %s", message.toString());
@@ -31,11 +30,12 @@ public class ConsumerService {
         messagingTemplate.convertAndSendToUser(userId,"/queue/private",from_msg);
 //        messagingTemplate.convertAndSend("/topic/hello/"+userId,from_msg);
     }
-
+@KafkaListener(topics = "${spring.kafka.topic.group}" , containerFactory = "groupKafkaListenerContainerFactory")
     public void consumeRoomMessage(@Payload GroupMessage message){
         System.out.printf("form consumer service : %s", message.toString());
-        String room_id= message.room();
+        String room_id= message.roomID();
         String from_msg= "%s : %s".formatted(message.from(),message.msg());
-        messagingTemplate.convertAndSendToUser(room_id,"/queue/private",from_msg);
+//        messagingTemplate.convertAndSendToUser(room_id,"/queue/private",from_msg);
+        roomMessagePublisher.publish(room_id,from_msg);
     }
 }

@@ -17,7 +17,7 @@ public class PublicRoomManagementService {
     public String createOrJoinRoom(PublicRoomRequest roomRequest) {
         String res = null;
         try {
-            redisTemplate.opsForSet().add(roomRequest.roomId(), roomRequest.userId());
+            redisTemplate.opsForSet().add("room-members:" + roomRequest.roomId(), roomRequest.userId());
             res =roomRequest.roomId();
         }catch (Exception e){
             log.error("Error creating room : ",e);

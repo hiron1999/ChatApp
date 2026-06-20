@@ -13,13 +13,13 @@ public class RoomUtils {
     private RedisTemplate<String,Object> redisTemplate;
 
     public  Boolean isExist (String room_id) throws Exception{
-        return redisTemplate.hasKey(room_id);
+        return redisTemplate.hasKey("room-members:" + room_id);
     }
 
     public List<String> getUsers(String room_id) throws Exception{
         List<String> users = Collections.EMPTY_LIST;
         if(isExist(room_id)){
-            users = Objects.requireNonNull(redisTemplate.opsForSet().members(room_id)).stream().map(Object::toString).toList();
+            users = Objects.requireNonNull(redisTemplate.opsForSet().members("room-members:" + room_id)).stream().map(Object::toString).toList();
         }
         return users;
     }
@@ -28,7 +28,7 @@ public class RoomUtils {
         Boolean is_present = Boolean.FALSE;
 
         if(isExist(room_id)){
-            is_present = Objects.requireNonNull(redisTemplate.opsForSet().members(room_id)).contains(user_id);
+            is_present = Objects.requireNonNull(redisTemplate.opsForSet().members("room-members:" + room_id)).contains(user_id);
         }
         return is_present;
     }

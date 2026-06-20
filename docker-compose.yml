@@ -149,24 +149,24 @@ services:
       - 8083:5540
     depends_on:
       - redis_cache
-  
-  chat-service:
-    image: chat-service:latest
-    hostname: chat-service
-
-    ports:
-      - 8080:8080
-    depends_on:
-      - broker_1
-      - broker_2
-      - broker_3
-      - redis_cache
-
-    environment:
-      KAFKA_CONN_BS: broker_1:9092
-      REDIS_HOST: redis_cache
-      REDIS_PORT: 6379
-
-
-
-
+#  
+#  chat-service:
+#    image: chat-service:latest
+#    hostname: chat-service
+#
+#    ports:
+#      - 8080:8080
+#    depends_on:
+#      - broker_1
+#      - broker_2
+#      - broker_3
+#      - redis_cache
+#
+#    environment:
+#      KAFKA_CONN_BS: broker_1:9092
+#      REDIS_HOST: redis_cache
+#      REDIS_PORT: 6379
+#
+#
+#
+#

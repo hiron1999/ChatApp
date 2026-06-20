@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: chat-service
 spec:
-
-  type: ClusterIP
+  type: NodePort
   ports:
     - port: 80
       targetPort: 8080
+      nodePort: 30000
   selector:
     app: chat-service
 ---

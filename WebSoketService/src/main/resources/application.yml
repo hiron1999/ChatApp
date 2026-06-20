@@ -6,10 +6,16 @@ spring:
     name: WebSoketService
   kafka:
     bootstrap-servers: ${KAFKA_CONN_BS:127.0.0.1:19092}
-    topic: 'massage-chanel'
+    topic:
+      private: 'massage-chanel'
+      group: 'message-room'
     consumer:
-      group: 'massage-subscriber'
-
+      group:
+        user: 'massage-subscriber'
+        room: 'group-massage-subscriber'
+  websocket:
+    session:
+      timeout: 180
   redis:
     host: ${REDIS_HOST:127.0.0.1}
     port: ${REDIS_PORT:6371}
