@@ -10,6 +10,8 @@ public class SessionConnectHandler implements ApplicationListener<SessionConnect
     @Override
     public void onApplicationEvent(SessionConnectedEvent event) {
         StompHeaderAccessor sha = StompHeaderAccessor.wrap(event.getMessage());
-        System.out.printf("user connected sessionid  : %s%n", sha.getSessionId());
+
+        System.out.printf("user  connected sessionid  : %s%n", sha.getSessionId());
     }
+
 }

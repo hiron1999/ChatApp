@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zookeeper-debug
+spec:
+  containers:
+    - name: debug
+      image: busybox
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: zookeeper-data
+          mountPath: /mnt/data
+  volumes:
+    - name: zookeeper-data
+      persistentVolumeClaim:
+        claimName: data-zookeeper-0
