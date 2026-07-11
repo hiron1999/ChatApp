@@ -33,3 +33,6 @@ build/
 .vscode/
 ### Docker mount vol ###
 /dockerVolume
+/.antigravitycli
+/RoomManager
+/RoomManager/*
