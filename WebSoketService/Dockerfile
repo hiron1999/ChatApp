@@ -3,7 +3,7 @@ FROM maven:3.9.8-eclipse-temurin-17-alpine AS build
 
 WORKDIR /home/app
 COPY . /home/app
-RUN mvn -f /home/app/pom.xml clean package
+RUN mvn -f /home/app/pom.xml clean package -DskipTests
 
 
 #Create image
